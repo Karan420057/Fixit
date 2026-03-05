@@ -24,7 +24,12 @@ public class ServiceResponse {
         this.availability = service.getAvailability();
         this.status = service.getStatus();
         this.providerName = service.getProvider().getName();
-        this.providerLocation = service.getProvider().getLocation();
+        // this.providerLocation = service.getProvider().getLocation();
+
+        this.providerLocation =
+                service.getProvider()
+                       .getProviderProfile()
+                       .getServiceArea();
     }
 
     // Getters only (important)

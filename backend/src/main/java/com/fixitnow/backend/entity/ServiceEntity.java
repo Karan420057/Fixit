@@ -16,7 +16,7 @@ public class ServiceEntity {
     private String subcategory;
 
     @Column(length = 1000)
-    private String description;
+    private String description; 
 
     private Double price;
 

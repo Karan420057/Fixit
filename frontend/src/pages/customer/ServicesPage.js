@@ -9,34 +9,74 @@ export const ServicesPage = () => {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [sortBy, setSortBy] = useState('rating');
-  const [maxPrice, setMaxPrice] = useState(2000);
+  const [maxPrice, setMaxPrice] = useState(3000);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
-  useEffect(() => {
-    api.get('/services')
-      .then(res => {
-        const enhanced = res.data.map(service => ({
-        ...service,
-        rating: service.rating ?? 0,
-        reviews: service.reviews ?? 0,
-        verified: service.verified ?? false,   // KEEP BACKEND VALUE
-        completedJobs: service.completedJobs ?? 0,
-        image: service.image ?? "🔧",
-        distance: service.distance ?? ""
-      }));
+  const [locationSearch, setLocationSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
-        setServices(enhanced);
-        setLoading(false);
-      })
-      .catch(err => {
+  const getIcon = (category) => {
+    return SERVICE_CATEGORIES.find(c => c.name === category)?.icon || "🔧";
+  };
+
+  // useEffect(() => {
+  //   api.get('/services')
+  //     .then(res => {
+  //       const enhanced = res.data.map(service => ({
+  //       ...service,
+  //       rating: service.rating ?? 0,
+  //       reviews: service.reviews ?? 0,
+  //       verified: service.verified ?? false,   // KEEP BACKEND VALUE
+  //       completedJobs: service.completedJobs ?? 0,
+  //       image: service.image ?? "🔧",
+  //       distance: service.distance ?? ""
+  //     }));
+
+  //       setServices(enhanced);
+  //       setLoading(false);
+  //     })
+  //     .catch(err => {
+  //       console.error(err);
+  //       setLoading(false);
+  //     });
+  // }, []);
+
+  useEffect(() => {
+    const fetchServices = async (loc = "") => {
+      try {
+        const params = {};
+
+        if (loc.trim()) {
+          params.location = loc.trim();
+        }
+
+        const res = await api.get('/services', { params });
+
+        setServices(res.data.map(service => ({
+          ...service,
+          rating: service.rating ?? 0,
+          reviews: service.reviews ?? 0,
+          verified: service.verified ?? false,
+          completedJobs: service.completedJobs ?? 0,
+          image: getIcon(service.category),
+          distance: service.providerLocation ?? ""
+        })));
+
+      } catch (err) {
         console.error(err);
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchServices(locationSearch);
+  }, [locationSearch]);
+
+
+  
 
   const filtered = useMemo(() => {
   let list = [...services];
@@ -104,7 +144,10 @@ export const ServicesPage = () => {
 
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => {
+                setSearch('');
+                setLocationSearch('');
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-400 hover:text-white"
             >
               <X className="w-4 h-4" />
@@ -130,6 +173,22 @@ export const ServicesPage = () => {
           <option value="price_asc">Price: Low to High</option>
           <option value="price_desc">Price: High to Low</option>
         </select>
+      </div>
+
+      <div className="relative flex-1 mt-2">
+        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-400" />
+        <input
+          type="text"
+          placeholder="Search by location (city / area)"
+          value={locationSearch}
+          onChange={e => {
+            const val = e.target.value;
+            setLocationSearch(val);
+            if (!val.trim()) setLocationSearch(val);
+          }}
+          // onKeyDown={e => e.key === 'Enter' && setUseLocationFilter(true)}
+          className="input-field !pl-11"
+        />
       </div>
 
       {/* Filter Panel */}
